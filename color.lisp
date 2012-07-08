@@ -66,9 +66,19 @@ then call (update-color-map).")
   (xlib:alloc-color (xlib:screen-default-colormap (screen-number screen)) color))
 
 (defun lookup-color (screen color)
-  (cond
-    ((typep color 'xlib:color) color)
-    (t (xlib:lookup-color (xlib:screen-default-colormap (screen-number screen)) color))))
+  (xlib:lookup-color (xlib:screen-default-colormap (screen-number screen)) color))
+
+(defun hex (hex)
+  "Converts a hexadecimal representation of a color to a decimal from [0,1)."
+  (labels ((convert (x)
+               (/ (read-from-string (concat "#x" x)) 256.0)))
+    (assert (and (eql (elt hex 0) #\#) (= (length hex) 7)))
+    (let ((red (subseq hex 1 3))
+          (green (subseq hex 3 5))
+          (blue (subseq hex 5 7)))
+      (xlib:make-color :red (funcall #'convert red)
+                       :green (funcall #'convert green)
+                       :blue (funcall #'convert blue)))))
 
 ;; Normal colors are dimmed and bright colors are intensified in order
 ;; to more closely resemble the VGA pallet.
@@ -77,15 +87,19 @@ then call (update-color-map).")
   (let ((scm (xlib:screen-default-colormap (screen-number screen))))
     (labels ((map-colors (amt)
                (loop for c in *colors*
-                     as color = (lookup-color screen c)
-                     do (adjust-color color amt)
-                     collect (xlib:alloc-color scm color))))
-      (setf (screen-color-map-normal screen) (apply #'vector (map-colors -0.25))
+                  as color = (handler-case (xlib:lookup-color scm c)
+                               (xlib:name-error (ne)
+                                 (hex c))) 
+                  do (adjust-color color amt)
+                  collect (xlib:alloc-color scm color))))
+      (setf (screen-color-map-normal screen) (apply #'vector (map-colors 0.0))
             (screen-color-map-bright screen) (apply #'vector (map-colors 0.25))))))
 
 (defun update-screen-color-context (screen)
   (let* ((cc (screen-message-cc screen))
-         (bright (lookup-color screen *text-color*)))
+         (bright (if (stringp *text-color*)
+                     (lookup-color screen *text-color*)
+                     *text-color*)))
     (setf
      (ccontext-default-fg cc) (screen-fg-color screen)
      (ccontext-default-bg cc) (screen-bg-color screen))

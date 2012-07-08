@@ -386,7 +386,10 @@ window along."
                  ((and (not (char= (char name 0) #\.)) ;change from hidden group
                        (char= (char (group-name group) 0) #\.))
                   (setf (group-number group) (find-free-group-number (current-screen)))))
-           (setf (group-name group) name)))))
+           (setf (group-name group) name)
+				;; NYX patch to call *focus-group-hook* on grename
+				(run-hook-with-args *focus-group-hook* group name)
+           ))))
 
 (defun echo-groups (screen fmt &optional verbose (wfmt *window-format*))
   "Print a list of the windows to the screen."
@@ -468,6 +471,8 @@ The windows will be moved to group \"^B^2*~a^n\"
             (progn
               (switch-to-group to-group)
               (kill-group dead-group to-group)
+					;; NYX patch to call *focus-group-hook* on gkill
+					(run-hook-with-args *focus-group-hook* to-group dead-group)
               (message "Deleted"))
             (message "Canceled"))
         (message "There's only one group left"))))
