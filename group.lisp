@@ -453,6 +453,18 @@ the default group formatting and window formatting, respectively."
         (setf (window-marked i) nil)
         (move-window-to-group i to-group)))))
 
+;;; Patch: gkill helper
+(defun consecutive-group-numbers ()
+    "Renumber all groups so they are consecutive after a gkill command.
+    As of 2012.07.09 the behavior of gkill is to just remove the group
+    which leaves the rest of the groups to have inconsecutive numbers."
+    (let ((total-number-of-groups (list-length (sort-groups (current-screen)))))
+            (loop
+                for group in (sort-groups (current-screen))
+                for i from 1
+                while (<= i total-number-of-groups)
+                do (setf (group-number group) i)))t)
+
 (defcommand gkill () ()
 "Kill the current group. All windows in the current group are migrated
 to the next group."
@@ -473,6 +485,7 @@ The windows will be moved to group \"^B^2*~a^n\"
               (kill-group dead-group to-group)
 					;; NYX patch to call *focus-group-hook* on gkill
 					(run-hook-with-args *focus-group-hook* to-group dead-group)
+					(consecutive-group-numbers)
               (message "Deleted"))
             (message "Canceled"))
         (message "There's only one group left"))))
