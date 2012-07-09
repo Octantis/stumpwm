@@ -232,6 +232,10 @@ window, the button clicked, and the x and y of the pointer.")
   "Called whenever the mode-line is clicked. It is called with 4 arguments,
 the mode-line, the button clicked, and the x and y of the pointer.")
 
+(defvar *update-group-hook* '()
+  "Called on any group list changes such as:
+  gkill, grename, focus, gnew, gnewbg, gnew-float, gnewbg-float.")
+
 ;; Data types and globals used by stumpwm
 
 (defvar *display* nil

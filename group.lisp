@@ -163,6 +163,7 @@ at 0. Return a netwm compliant group id."
                             (list (netwm-group-id new-group))
                             :cardinal 32)
       (update-all-mode-lines)
+			(run-hook *update-group-hook*)
       (run-hook-with-args *focus-group-hook* new-group old-group))))
 
 (defun move-window-to-group (window to-group)
@@ -299,6 +300,7 @@ Groups are known as \"virtual desktops\" in the NETWM standard."
                       (setf (screen-groups screen) (append (screen-groups screen) (list ng)))
                       (netwm-set-group-properties screen)
                       (netwm-update-groups screen)
+							(run-hook *update-group-hook*)
                       ng))))
         (unless background
           (switch-to-group ng))
@@ -387,8 +389,7 @@ window along."
                        (char= (char (group-name group) 0) #\.))
                   (setf (group-number group) (find-free-group-number (current-screen)))))
            (setf (group-name group) name)
-				;; NYX patch to call *focus-group-hook* on grename
-				(run-hook-with-args *focus-group-hook* group name)
+				(run-hook *update-group-hook*)
            ))))
 
 (defun echo-groups (screen fmt &optional verbose (wfmt *window-format*))
@@ -483,9 +484,8 @@ The windows will be moved to group \"^B^2*~a^n\"
             (progn
               (switch-to-group to-group)
               (kill-group dead-group to-group)
-					;; NYX patch to call *focus-group-hook* on gkill
-					(run-hook-with-args *focus-group-hook* to-group dead-group)
 					(consecutive-group-numbers)
+					(run-hook *update-group-hook*)
               (message "Deleted"))
             (message "Canceled"))
         (message "There's only one group left"))))
