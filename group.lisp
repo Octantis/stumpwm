@@ -300,8 +300,9 @@ Groups are known as \"virtual desktops\" in the NETWM standard."
                       (setf (screen-groups screen) (append (screen-groups screen) (list ng)))
                       (netwm-set-group-properties screen)
                       (netwm-update-groups screen)
-							(run-hook *update-group-hook*)
                       ng))))
+        (if background
+			(run-hook *update-group-hook*))
         (unless background
           (switch-to-group ng))
         ng)))
