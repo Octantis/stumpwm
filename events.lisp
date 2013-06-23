@@ -257,6 +257,7 @@ The Caller is responsible for setting up the input focus."
       when (typep group (first i))
       collect (second i))))
 
+;; BUG: With some window types they don't let top maps be read
 (define-stump-event-handler :key-press (code state #|window|#)
   (labels ((get-cmd (code state)
              (with-focus (screen-key-window (current-screen))
