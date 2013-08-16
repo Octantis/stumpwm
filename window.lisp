@@ -1033,3 +1033,15 @@ be used to override the default window formatting."
     (set-window-geometry window
                          :width w
                          :height h)))
+
+(defun window-float-p (window)
+  "Predicate to tell if the window is floating"
+  (string= (class-name (class-of window)) "FLOAT-WINDOW"))
+(defun window-tile-p (window)
+  "Predicate to tell if the window is tiled"
+  (string= (class-name (class-of window)) "TILE-WINDOW"))
+
+(defun get-floating-windows-in (group)
+  (remove-if-not #'window-float-p (group-windows group)))
+(defun get-tile-windows-in (group)
+  (remove-if-not #'window-tile-p (group-windows group)))
