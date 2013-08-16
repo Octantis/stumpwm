@@ -322,7 +322,7 @@ T (default) then also focus the frame."
 
 (defun frame-sort-windows (group f)
   (remove-if-not (lambda (w) (eq (window-frame w) f))
-                 (sort-windows group)))
+                 (sort-windows-in group)))
 
 (defun copy-frame-tree (tree)
   "Return a copy of the frame tree."

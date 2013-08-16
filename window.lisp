@@ -370,13 +370,16 @@ _NET_WM_STATE_DEMANDS_ATTENTION set"
       (defun (setf ,(intern1 (format nil "WINDOW-~a" attr))) (,val ,win)
         (setf (gethash ,attr (window-plist ,win))) ,val))))
 
-(defun sort-windows (group)
-  "Return a copy of the screen's window list sorted by number."
-  (sort1 (group-windows group) '< :key 'window-number))
+(defun sort-windows (windows)
+  "Given a list of windows, returns the list sorted by their number"
+  (sort1 windows '< :key 'window-number))
+(defun sort-windows-in (group)
+  "Given a group, sort those windows by their number"
+  (sort-windows (group-windows group)))
 
 (defun marked-windows (group)
   "Return the marked windows in the specified group."
-  (loop for i in (sort-windows group)
+  (loop for i in (sort-windows-in group)
         when (window-marked i)
         collect i))
 
@@ -937,7 +940,7 @@ is using the number, then the windows swap numbers. Defaults to current group."
 (defcommand repack-window-numbers (&optional preserved) ()
   "Ensure that used window numbers do not have gaps; ignore PRESERVED window numbers."
   (let* ((group (current-group))
-	 (windows (sort-windows group)))
+	 (windows (sort-windows-in group)))
     (loop for w in windows
 	  do (unless (find (window-number w) preserved)
 	       (setf
@@ -956,7 +959,7 @@ override the default window formatting."
   (if (null (group-windows (current-group)))
       (message "No Managed Windows")
       (let* ((group (current-group))
-             (window (select-window-from-menu (sort-windows group) fmt)))
+             (window (select-window-from-menu (sort-windows-in group) fmt)))
         (if window
             (group-focus-window group window)
             (throw 'error :abort)))))

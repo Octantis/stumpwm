@@ -158,7 +158,7 @@ timer.")
    "Using *window-format*, return a 1 line list of the windows, space seperated."
   (format nil "~{~a~^ ~}"
           (mapcar (lambda (w) (format-expand *window-formatters* *window-format* w))
-                  (sort-windows (mode-line-current-group ml)))))
+                  (sort-windows-in (mode-line-current-group ml)))))
 
 (defun fmt-group-list (ml)
   "Given a group list all the groups in the group's screen."
