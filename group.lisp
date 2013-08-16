@@ -26,7 +26,7 @@
 
 (export '(current-group))
 
-(defvar *default-group-type* 'tile-group
+(defvar *default-group-type* 'tile
   "The type of group that should be created by default.")
 
 (defclass group ()
@@ -291,7 +291,9 @@ Groups are known as \"virtual desktops\" in the NETWM standard."
           (string= name "."))
       (error "Groups must have a name.")
       (let ((ng (or (find-group screen name)
-                    (let ((ng (make-instance type
+                    (let ((ng (make-instance (cond type
+                                                   (float 'float-group)
+                                                   (tile 'tile-group))
                                              :screen screen
                                              :number (if (char= (char name 0) #\.)
                                                          (find-free-hidden-group-number screen)
@@ -340,11 +342,16 @@ current group. If @var{name} begins with a dot (``.'') the group new
 group will be created in the hidden state. Hidden groups have group
 numbers less than one and are invisible to from gprev, gnext, and, optionally,
 groups and vgroups commands."
-  (add-group (current-screen) name))
-
+  (add-group (current-screen) name :type 'tile))
 (defcommand gnewbg (name) ((:string "Group Name: "))
   "Create a new group but do not switch to it."
-  (add-group (current-screen) name :background t))
+  (add-group (current-screen) name :type 'tile :background t))
+(defcommand gnew-float (name) ((:rest "Group Name: "))
+  "Create a floating window group with the specified name and switch to it."
+  (add-group (current-screen) name :type 'float))
+(defcommand gnewbg-float (name) ((:rest "Group Name: "))
+  "Create a floating window group with the specified name, but do not switch to it."
+  (add-group (current-screen) name :background t :type 'float))
 
 (defcommand gnext () ()
 "Cycle to the next group in the group list."
