@@ -287,13 +287,14 @@ Groups are known as \"virtual desktops\" in the NETWM standard."
     numbers."
   (check-type screen screen)
   (check-type name string)
+
+  (setf type (case type (tile 'tile-group) (float 'float-group)))
+
   (if (or (string= name "")
           (string= name "."))
       (error "Groups must have a name.")
       (let ((ng (or (find-group screen name)
-                    (let ((ng (make-instance (cond type
-                                                   (float 'float-group)
-                                                   (tile 'tile-group))
+                    (let ((ng (make-instance type
                                              :screen screen
                                              :number (if (char= (char name 0) #\.)
                                                          (find-free-hidden-group-number screen)
