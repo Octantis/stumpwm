@@ -279,7 +279,7 @@ Groups are known as \"virtual desktops\" in the NETWM standard."
       (netwm-update-groups screen)
       (netwm-set-group-properties screen))))
 
-(defun add-group (screen name &key background (type *default-group-type*))
+(defun add-group (screen name &key background type)
   "Create a new group in SCREEN with the supplied name. group names
     starting with a . are considered hidden groups. Hidden groups are
     skipped by gprev and gnext and do not show up in the group
@@ -288,7 +288,10 @@ Groups are known as \"virtual desktops\" in the NETWM standard."
   (check-type screen screen)
   (check-type name string)
 
-  (setf type (case type (tile 'tile-group) (float 'float-group)))
+  (setf type (case type
+               (tile 'tile-group)
+               (float 'float-group)
+               (t *default-group-type*)))
 
   (if (or (string= name "")
           (string= name "."))
