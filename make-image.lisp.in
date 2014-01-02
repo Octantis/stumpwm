@@ -1,7 +1,8 @@
 #-(or sbcl clisp openmcl ecl) (error "This lisp implementation is not supported.")
 
 (require 'asdf)
-(asdf:oos 'asdf:load-op 'stumpwm)
+(asdf:load-system :stumpwm)
+
 #-ecl (stumpwm:set-contrib-dir "@CONTRIB_DIR@")
 
 #+sbcl

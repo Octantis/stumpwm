@@ -34,10 +34,10 @@ stumpwm.info: stumpwm.texi
 
 # FIXME: This rule is too hardcoded
 stumpwm.texi: stumpwm.texi.in
-	$(LISP) $(@LISP@_INFOOPTS)
+	CL_SOURCE_REGISTRY=$(PWD): $(LISP) $(@LISP@_INFOOPTS)
 
 stumpwm: $(FILES)
-	$(LISP) $(@LISP@_BUILDOPTS)
+	CL_SOURCE_REGISTRY=$(PWD): $(LISP) $(@LISP@_BUILDOPTS)
 
 release:
 	git tag -a -m "version @PACKAGE_VERSION@" @PACKAGE_VERSION@
