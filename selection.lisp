@@ -100,4 +100,5 @@
 (defcommand copy-last-message () ()
   "Copy the last message displayed into the X selection"
   (when (screen-last-msg (current-screen))
-    (set-x-selection (uncolorify (format nil "~{~a~^~%~}" (car (screen-last-msg (current-screen))))))))
+  ))
+    ; (set-x-selection (uncolorify (format nil "~{~a~^~%~}" (car (screen-last-msg (current-screen))))))))

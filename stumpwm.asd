@@ -50,8 +50,7 @@
                (:file "help")
                (:file "fdump")
 	       (:file "time")
-	       (:file "mode-line")
-	       (:file "color")
+	       ;; (:file "mode-line")
                (:file "module")
 	       (:file "stumpwm")
 	       ;; keep this last so it always gets recompiled if

@@ -429,10 +429,6 @@ exist, in which case they go into the current group.")
    (frame-outline-gc :initform nil :accessor screen-frame-outline-gc)
    ;; color contexts
    (message-cc :initform nil :accessor screen-message-cc)
-   (mode-line-cc :initform nil :accessor screen-mode-line-cc)
-   ;; color maps
-   (color-map-normal :initform nil :accessor screen-color-map-normal)
-   (color-map-bright :initform nil :accessor screen-color-map-bright)
    (ignore-msg-expose :initform nil :accessor screen-ignore-msg-expose :documentation
     "used to ignore the first expose even when mapping the message window.")
    ;; the window that has focus
