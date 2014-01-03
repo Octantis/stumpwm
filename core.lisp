@@ -139,3 +139,7 @@
 (defun warp-pointer-relative (dx dy)
   "Move the pointer by DX and DY relative to the current location."
   (xlib:warp-pointer-relative *display* dx dy))
+
+;; Util func for strings/symbols/keywords
+(defun as-keyword-str (string)
+  (intern (string-upcase string) :keyword))
