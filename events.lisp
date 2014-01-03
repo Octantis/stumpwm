@@ -40,15 +40,6 @@
                                         ;(define-stump-event-handler :map-notify (event-window window override-redirect-p)
                                         ;  )
 
-(defun handle-mode-line-window (xwin x y width height)
-  (declare (ignore width))
-  (let ((ml (find-mode-line-window xwin)))
-    (when ml
-      (setf (xlib:drawable-height xwin) height)
-      (update-mode-line-position ml x y)
-      (resize-mode-line ml)
-      (sync-mode-line ml))))
-
 (defun handle-unmanaged-window (xwin x y width height border-width value-mask)
   "Call this function for windows that stumpwm isn't
   managing. Basically just give the window what it wants."
@@ -106,7 +97,6 @@
          ;; configure event. The ICCCM says we have to do this at
          ;; certain times; exactly when, I've sorta forgotten.
          (update-configuration win))
-        ((handle-mode-line-window win x y width height))
         (t (handle-unmanaged-window window x y width height border-width value-mask))))))
 
 (define-stump-event-handler :configure-notify (stack-mode #|parent|# window #|above-sibling|# x y width height border-width value-mask)
@@ -125,8 +115,7 @@
              (if new-heads
                  (progn
                    (scale-screen screen new-heads)
-                   (mapc 'group-sync-all-heads (screen-groups screen))
-                   (update-mode-lines screen))
+                   (mapc 'group-sync-all-heads (screen-groups screen)))
                  (dformat 1 "Invalid configuration! ~S~%" new-heads)))))))))
 
 (define-stump-event-handler :map-request (parent send-event-p window)
@@ -143,7 +132,8 @@
          (when wwin
            (setf screen (window-screen wwin)))
          (dformat 1 "window is dock-type. attempting to place in mode-line.")
-         (place-mode-line-window screen window)
+         ;; (place-mode-line-window screen window)
+         (xlib:reparent-window win (screen-root screen) 0 0) ;; xwin
          ;; Some panels are broken and only set the dock type after they map and withdraw.
          (when wwin
            (setf (screen-withdrawn-windows screen) (delete wwin (screen-withdrawn-windows screen))))
@@ -192,10 +182,7 @@
     (let ((win (or (find-window window)
                    (find-withdrawn-window window))))
       (if win
-          (destroy-window win)
-          (progn
-            (let ((ml (find-mode-line-window window)))
-              (when ml (destroy-mode-line-window ml))))))))
+          (destroy-window win)))))
 
 (defun read-from-keymap (kmaps &optional update-fn)
   "Read a sequence of keys from the user, guided by the keymaps,
@@ -341,9 +328,8 @@ converted to an atom is removed."
 (defun update-window-properties (window atom)
   (case atom
     (:wm_name
-     (setf (window-title window) (xwin-name (window-xwin window)))
      ;; Let the mode line know about the new name.
-     (update-all-mode-lines))
+     (setf (window-title window) (xwin-name (window-xwin window))))
     (:wm_normal_hints
      (setf (window-normal-hints window) (get-normalized-normal-hints (window-xwin window))
            (window-type window) (xwin-type (window-xwin window)))
@@ -434,10 +420,7 @@ converted to an atom is removed."
          ;; message window exposed
          (if (plusp (screen-ignore-msg-expose screen))
              (decf (screen-ignore-msg-expose screen))
-             (redraw-current-message screen)))
-        ((setf ml (find-mode-line-window window))
-         (setf screen (mode-line-screen ml))
-         (redraw-mode-line ml t)))
+             (redraw-current-message screen))))
       ;; Show the area.
       (when (and *debug-expose-events* screen)
         (draw-cross screen window x y width height)))))
@@ -463,8 +446,7 @@ converted to an atom is removed."
   (setf (window-fullscreen window) nil)
   (dformat 2 "client requests to leave fullscreen~%")
   (remove-wm-state (window-xwin window) :_NET_WM_STATE_FULLSCREEN)
-  (update-decoration window)
-  (update-mode-lines (current-screen)))
+  (update-decoration window))
 
 (defun update-fullscreen (window action)
   (let ((fullscreen-p (window-fullscreen window)))
@@ -583,8 +565,7 @@ the window in it's frame."
   (when (and window (eq mode :normal) (eq *mouse-focus-policy* :sloppy))
     (let ((win (find-window window)))
       (when (and win (find win (top-windows)))
-        (focus-all win)
-        (update-all-mode-lines)))))
+        (focus-all win)))))
 
 (define-stump-event-handler :button-press (window code x y child time)
   ;; Pass click to client
@@ -594,8 +575,6 @@ the window in it's frame."
       ((and (setf screen (find-screen window)) (not child))
        (group-button-press (screen-current-group screen) x y :root)
        (run-hook-with-args *root-click-hook* screen code x y))
-      ((setf ml (find-mode-line-window window))
-       (run-hook-with-args *mode-line-click-hook* ml code x y))
       ((setf win (find-window-by-parent window (top-windows)))
        (group-button-press (window-group win) x y win)))))
 

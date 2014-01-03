@@ -86,14 +86,12 @@ may need to sync itself. WHAT-CHANGED is a hint at what changed."))
       (window-clear-urgency window)
       (progn
         (push window (screen-urgent-windows (window-screen window)))
-        (update-mode-lines (window-screen window))
         (values t))))
 
 (defun unregister-urgent-window (window)
   "Remove WINDOW to its screen's list of urgent windows"
   (setf (screen-urgent-windows (window-screen window))
-        (delete window (screen-urgent-windows (window-screen window))))
-  (update-mode-lines (window-screen window)))
+        (delete window (screen-urgent-windows (window-screen window)))))
 
 (defun window-clear-urgency (window)
   "Clear the urgency bit and/or _NET_WM_STATE_DEMANDS_ATTENTION on
@@ -603,9 +601,7 @@ and bottom_end_x."
         (unless (or (eq (xlib:window-override-redirect win) :on)
                     (internal-window-p screen win))
           (if (eq (xwin-type win) :dock)
-              (progn
-                (dformat 1 "Window ~S is dock-type. Placing in mode-line.~%" win)
-                (place-mode-line-window screen win))
+              (xlib:reparent-window win (screen-root screen) 0 0) ;; xwin
               (if (or (eql map-state :viewable)
                       (eql wm-state +iconic-state+))
                   (progn
@@ -708,8 +704,6 @@ needed."
         (apply 'run-hook-with-args *place-window-hook* window (window-group window) placement-data)))
     ;; must call this after the group slot is set for the window.
     (grab-keys-on-window window)
-    ;; quite often the modeline displays the window list, so update it
-    (update-all-mode-lines)
     ;; Run the new window hook on it.
     (run-hook-with-args *new-window-hook* window)
     window))
@@ -775,8 +769,6 @@ needed."
       (setf (screen-focus screen) nil))
     (netwm-remove-window window)
     (group-delete-window group window)
-    ;; quite often the modeline displays the window list, so update it
-    (update-all-mode-lines)
     ;; Run the destroy hook on the window
     (run-hook-with-args *destroy-window-hook* window)))
 

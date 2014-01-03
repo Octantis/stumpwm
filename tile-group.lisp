@@ -123,14 +123,12 @@
              *root-click-focuses-frame*)
     (let* ((frame (find-frame group x y)))
       (when frame
-        (focus-frame group frame)
-        (update-all-mode-lines)))))
+        (focus-frame group frame)))))
 
 (defmethod group-button-press ((group tile-group) x y (where window))
   (declare (ignore x y))
   (when (eq *mouse-focus-policy* :click)
-    (focus-all where)
-    (update-all-mode-lines)))
+    (focus-all where)))
 
 (defmethod group-root-exposure ((group tile-group))
   (show-frame-outline group nil))
@@ -235,27 +233,11 @@
 
 (defun frame-display-y (group frame)
   "Return a Y for frame that doesn't overlap the mode-line."
-  (let* ((head (frame-head group frame))
-         (ml (head-mode-line head))
-	 (head-y (frame-y head))
-	 (rel-frame-y (- (frame-y frame) head-y)))
-    (if (and ml (not (eq (mode-line-mode ml) :hidden)))
-        (case (mode-line-position ml)
-          (:top
-           (+ head-y
-	      (+ (mode-line-height ml) (round (* rel-frame-y (mode-line-factor ml))))))
-          (:bottom
-           (+ head-y
-	      (round (* rel-frame-y (mode-line-factor ml))))))
-        (frame-y frame))))
+        (frame-y frame))
 
 (defun frame-display-height (group frame)
   "Return a HEIGHT for frame that doesn't overlap the mode-line."
-  (let* ((head (frame-head group frame))
-         (ml (head-mode-line head)))
-    (if (and ml (not (eq (mode-line-mode ml) :hidden)))
-        (round (* (frame-height frame) (mode-line-factor ml)))
-        (frame-height frame))))
+        (frame-height frame))
 
 (defun frame-intersect (f1 f2)
   "Return a new frame representing (only) the intersection of F1 and F2. WIDTH and HEIGHT will be <= 0 if there is no overlap"

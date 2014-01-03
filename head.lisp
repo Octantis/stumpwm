@@ -96,8 +96,7 @@
                         :height height
                         :window nil)))
     (scale-head screen oh nh)
-    (dolist (group (screen-groups screen)) (group-sync-head group oh))
-    (update-mode-lines screen)))
+    (dolist (group (screen-groups screen)) (group-sync-head group oh))))
 
 (defun current-head (&optional (group (current-group)))
   (group-current-head group))
@@ -120,8 +119,6 @@
 
 (defun remove-head (screen head)
   (dformat 1 "Removing head #~D~%" (head-number head))
-  (when (head-mode-line head)
-    (toggle-mode-line screen head))
   (dolist (group (screen-groups screen))
     (group-remove-head group head))
   ;; Remove it from SCREEN's head list.

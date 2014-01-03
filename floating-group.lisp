@@ -56,8 +56,8 @@
   (let ((group (window-group window)))
     (setf (xlib:window-background (window-parent window))
           (if (eq (group-current-window group) window)
-              (screen-float-focus-color (window-screen window))
-              (screen-float-unfocus-color (window-screen window))))
+              (get-color (window-screen window) :float-focus)
+              (get-color (window-screen window) :float-unfocus)))
     (xlib:clear-area (window-parent window))))
 
 (defmethod window-sync ((window float-window) hint)

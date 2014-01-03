@@ -228,10 +228,6 @@ sequence it is a part of, and command value bound to the key.")
 window. Called with 4 arguments, the screen containing the root
 window, the button clicked, and the x and y of the pointer.")
 
-(defvar *mode-line-click-hook* '()
-  "Called whenever the mode-line is clicked. It is called with 4 arguments,
-the mode-line, the button clicked, and the x and y of the pointer.")
-
 (defvar *update-group-hook* '()
   "Called on any group list changes such as:
   gkill, grename, focus, gnew, gnewbg, gnew-float, gnewbg-float.")
@@ -252,6 +248,8 @@ the mode-line, the button clicked, and the x and y of the pointer.")
 
 (defvar *normal-border-width* 1
   "The width in pixels given to the borders of regular windows.")
+
+(defparameter +default-font-name+ "9x15bold")
 
 (defvar *text-color* "white"
   "The color of message text.")
@@ -353,15 +351,6 @@ are valid values.
 @end table")
 
 ;; default values. use the set-* functions to these attributes
-(defparameter +default-foreground-color+ "White")
-(defparameter +default-background-color+ "Black")
-(defparameter +default-window-background-color+ "Black")
-(defparameter +default-border-color+ "White")
-(defparameter +default-font-name+ "9x15bold")
-(defparameter +default-focus-color+ "White")
-(defparameter +default-unfocus-color+ "Black")
-(defparameter +default-float-focus-color+ "Orange")
-(defparameter +default-float-unfocus-color+ "SteelBlue4")
 (defparameter +default-frame-outline-width+ 2)
 
 ;; Don't set these variables directly, use set-<var name> instead
@@ -404,9 +393,9 @@ Use the window's resource name.
 
 (defstruct (head (:include frame))
   ;; point back to the screen this head belongs to
-  screen
+  screen)
   ;; a bar along the top or bottom that displays anything you want.
-  mode-line)
+  ;; mode-line)
 
 (defclass screen ()
   ((id :initform nil :accessor screen-id)
