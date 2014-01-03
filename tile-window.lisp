@@ -6,20 +6,22 @@
   ((frame   :initarg :frame   :accessor window-frame)))
 
 (defmethod update-decoration ((window tile-window))
-  ;; give it a colored border but only if there are more than 1 frames.
   (let* ((group (window-group window))
          (screen (group-screen group)))
-    (let ((c (if (and (> (length (group-frames group)) 1)
-                      (eq (group-current-window group) window))
-                 (screen-focus-color screen)
-                 (screen-unfocus-color screen))))
+    ;; (let ((c (if (and (> (length (group-frames group)) 1)
+    ;;                   (eq (group-current-window group) window))
+    (let ((c (if (eq (group-current-window group) window)
+                 (get-color screen :focus :version (as-keyword-str (window-res window)))
+                 (get-color screen :unfocus)))
+          (win-bg
+           (get-color screen :win-bg :version (as-keyword-str (window-res window)))))
       (setf (xlib:window-border (window-parent window)) c
             ;; windows that dont fill the entire screen have a transparent background.
             (xlib:window-background (window-parent window))
             (if (eq (window-type window) :normal)
                 (if (eq *window-border-style* :thick)
                     c
-                    (screen-win-bg-color screen))
+                    win-bg)
                 :none))
       ;; get the background updated
       (xlib:clear-area (window-parent window)))))

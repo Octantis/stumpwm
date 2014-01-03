@@ -837,15 +837,15 @@ windows used to draw the numbers in. The caller must destroy them."
               (let ((w (xlib:create-window
                         :parent (screen-root screen)
                         :x (frame-x f) :y (frame-display-y group f) :width 1 :height 1
-                        :background (screen-fg-color screen)
-                        :border (screen-border-color screen)
+                        :background (get-color screen :bg)
+                        :border (get-color screen :border)
                         :border-width 1
                         :event-mask '())))
                 (xlib:map-window w)
                 (setf (xlib:window-priority w) :above)
                 (echo-in-window w (screen-font screen)
-                                (screen-fg-color screen)
-                                (screen-bg-color screen)
+                                (get-color screen :fg)
+                                (get-color screen :bg)
                                 (string (get-frame-number-translation f)))
                 (xlib:display-finish-output *display*)
                 (dformat 3 "mapped ~S~%" (frame-number f))

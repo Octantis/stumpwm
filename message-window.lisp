@@ -83,10 +83,10 @@ function expects to be wrapped in a with-state for win."
 (defun invert-rect (screen win x y width height)
   "invert the color in the rectangular area. Used for highlighting text."
   (let ((gcontext (xlib:create-gcontext :drawable win
-                                        :foreground (screen-fg-color screen)
+                                        :foreground (get-color screen :fg)
                                         :function boole-xor)))
     (xlib:draw-rectangle win gcontext x y width height t)
-    (setf (xlib:gcontext-foreground gcontext) (screen-bg-color screen))
+    (setf (xlib:gcontext-foreground gcontext) (get-color screen :bg))
     (xlib:draw-rectangle win gcontext x y width height t)))
 
 (defun unmap-message-window (screen)
@@ -166,7 +166,7 @@ function expects to be wrapped in a with-state for win."
                                        (truncate (- (frame-height frame) (font-height font)) 2))
                 (xlib:window-priority w) :above))
         (xlib:map-window w)
-        (echo-in-window w font (screen-fg-color (current-screen)) (screen-bg-color (current-screen)) string)
+        (echo-in-window w font (get :bg-color (current-screen) :fg) (get-color (current-screen) :bg) string)
         (reset-frame-indicator-timer)))))
 
 (defun echo-in-window (win font fg bg string)

@@ -27,14 +27,6 @@
 (export '(current-screen
           current-window
           screen-current-window
-          set-fg-color
-          set-bg-color
-          set-border-color
-          set-win-bg-color
-          set-focus-color
-          set-unfocus-color
-          set-float-focus-color
-          set-float-unfocus-color
           set-msg-border-width
           set-frame-outline-width
           set-font))
@@ -194,29 +186,30 @@ identity with a range check."
   (xlib:screen-root (screen-number screen)))
 
 (defun update-colors-for-screen (screen)
-  (let ((fg (screen-fg-color screen))
-        (bg (screen-bg-color screen)))
+  (let ((fg (get-color screen :fg))
+        (bg (get-color screen :bg))
+        (border (get-color screen :border))
+        (win-bg (get-color screen :win-bg)))
     (setf (xlib:gcontext-foreground (screen-message-gc screen)) fg
           (xlib:gcontext-background (screen-message-gc screen)) bg
           (xlib:gcontext-foreground (screen-frame-outline-gc screen)) fg
           (xlib:gcontext-background (screen-frame-outline-gc screen)) bg
           (ccontext-default-fg (screen-message-cc screen)) fg
-          (ccontext-default-bg (screen-message-cc screen)) bg))
-  (dolist (i (list (screen-message-window screen)
-                   (screen-input-window screen)
-                   (screen-frame-window screen)))
-    (setf (xlib:window-border i) (screen-border-color screen)
-          (xlib:window-background i) (screen-bg-color screen)))
-  ;; update the backgrounds of all the managed windows
-  (dolist (g (screen-groups screen))
-    (dolist (w (group-windows g))
-      (unless (eq w (group-current-window g))
-        (setf (xlib:window-background (window-parent w)) (screen-win-bg-color screen))
-        (xlib:clear-area (window-parent w)))))
-  (dolist (i (screen-withdrawn-windows screen))
-    (setf (xlib:window-background (window-parent i)) (screen-win-bg-color screen))
-    (xlib:clear-area (window-parent i)))
-  (update-screen-color-context screen))
+          (ccontext-default-bg (screen-message-cc screen)) bg)
+    (dolist (i (list (screen-message-window screen)
+                     (screen-input-window screen)
+                     (screen-frame-window screen)))
+      (setf (xlib:window-border i) border
+            (xlib:window-background i) bg))
+    ;; update the backgrounds of all the managed windows
+    (dolist (g (screen-groups screen))
+      (dolist (w (group-windows g))
+        ;; (unless (eq w (group-current-window g))
+        (setf (xlib:window-background (window-parent w)) win-bg)
+        (xlib:clear-area (window-parent w))))
+    (dolist (i (screen-withdrawn-windows screen))
+      (setf (xlib:window-background (window-parent i)) win-bg)
+      (xlib:clear-area (window-parent i)))))
 
 (defun update-colors-all-screens ()
   "After setting the fg, bg, or border colors. call this to sync any existing windows."
@@ -240,61 +233,13 @@ identity with a range check."
 (defun color-exists-p (color)
   (handler-case
       (loop for i in *screen-list*
-            always (xlib:lookup-color (xlib:screen-default-colormap (screen-number i)) color))
+            ;; always (xlib:lookup-color (xlib:screen-default-colormap (screen-number i)) color))
+            always (lookup-color i color)) ;; FIXME: from color.lisp
     (xlib:name-error () nil)))
 
 (defun font-exists-p (font-name)
   ;; if we can list the font then it exists
   (plusp (length (xlib:list-font-names *display* font-name :max-fonts 1))))
-
-(defmacro set-any-color (val color)
-  `(progn (dolist (s *screen-list*)
-            (setf (,val s) (alloc-color s ,color)))
-    (update-colors-all-screens)))
-
-;; FIXME: I don't like any of this.  Isn't there a way to define
-;; a setf method to call (update-colors-all-screens) when the user
-;; does eg. (setf *foreground-color* "green") instead of having
-;; these redundant set-foo functions?
-(defun set-fg-color (color)
-  "Set the foreground color for the message bar and input
-bar. @var{color} can be any color recognized by X."
-  (setf *text-color* color)
-  (set-any-color screen-fg-color color))
-
-(defun set-bg-color (color)
-  "Set the background color for the message bar and input
-bar. @var{color} can be any color recognized by X."
-  (set-any-color screen-bg-color color))
-
-(defun set-border-color (color)
-  "Set the border color for the message bar and input
-bar. @var{color} can be any color recognized by X."
-  (set-any-color screen-border-color color))
-
-(defun set-win-bg-color (color)
-  "Set the background color of the window. The background color will only
-be visible for windows with size increment hints such as @samp{emacs}
-and @samp{xterm}."
-  (set-any-color screen-win-bg-color color))
-
-(defun set-focus-color (color)
-  "Set the border color for focused windows. This is only used when
-there is more than one frame."
-  (set-any-color screen-focus-color color))
-
-(defun set-unfocus-color (color)
-  "Set the border color for windows without focus. This is only used when
-there is more than one frame."
-  (set-any-color screen-unfocus-color color))
-
-(defun set-float-focus-color (color)
-  "Set the border color for focused windows in a float group."
-  (set-any-color screen-float-focus-color color))
-
-(defun set-float-unfocus-color (color)
-  "Set the border color for windows without focus in a float group."
-  (set-any-color screen-float-unfocus-color color))
 
 (defun set-msg-border-width (width)
   "Set the border width for the message bar and input
@@ -392,18 +337,19 @@ FOCUS-WINDOW is an extra window used for _NET_SUPPORTING_WM_CHECK."
           :button-press
           :exposure))
   (xlib:display-finish-output *display*)
+      (set-colour-init id screen-number '(:fg "#ffffff"
+                                :bg "#000000"
+                                :border "#000000"
+                                :focus "#ffffff"
+                                :unfocus "#000000"
+                                :win-bg "#000000"
+                                :float-focus "#ffffff"
+                                :float-unfocus "#000000"))
   ;; Initialize the screen structure
-  (labels ((ac (color)
-             (xlib:alloc-color (xlib:screen-default-colormap screen-number) color)))
     (let* ((screen (make-instance 'screen))
-           (fg (ac +default-foreground-color+))
-           (bg (ac +default-background-color+))
-           (border (ac +default-border-color+))
-           (focus (ac +default-focus-color+))
-           (unfocus (ac +default-unfocus-color+))
-           (float-focus (ac +default-float-focus-color+))
-           (float-unfocus (ac +default-float-unfocus-color+))
-           (win-bg (ac +default-window-background-color+))
+           (bg (getf (getf *colors* id) :bg))
+           (fg (getf (getf *colors* id) :fg))
+           (border (getf (getf *colors* id) :border))
            (input-window (xlib:create-window :parent (xlib:screen-root screen-number)
                                              :x 0 :y 0 :width 20 :height 20
                                              :background bg
@@ -452,14 +398,6 @@ FOCUS-WINDOW is an extra window used for _NET_SUPPORTING_WM_CHECK."
             (screen-groups screen) (list group)
             (screen-current-group screen) group
             (screen-font screen) font
-            (screen-fg-color screen) fg
-            (screen-bg-color screen) bg
-            (screen-win-bg-color screen) win-bg
-            (screen-border-color screen) border
-            (screen-focus-color screen) focus
-            (screen-unfocus-color screen) unfocus
-            (screen-float-focus-color screen) float-focus
-            (screen-float-unfocus-color screen) float-unfocus
             (screen-msg-border-width screen) 1
             (screen-frame-outline-width screen) +default-frame-outline-width+
             (screen-input-window screen) input-window
@@ -484,9 +422,8 @@ FOCUS-WINDOW is an extra window used for _NET_SUPPORTING_WM_CHECK."
             (tile-group-current-frame group) (first (tile-group-frame-tree group)))
       (netwm-set-properties screen focus-window)
       (update-colors-for-screen screen)
-      (update-color-map screen)
       (xwin-grab-keys focus-window screen)
-      screen)))
+      screen))
 
 ;;; Screen commands
 

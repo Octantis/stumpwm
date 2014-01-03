@@ -32,6 +32,7 @@
 	       (:file "core")
                (:file "command")
                (:file "menu")
+               (:file "color")
                (:file "screen")
                (:file "head")
                (:file "group")
