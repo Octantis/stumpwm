@@ -49,7 +49,6 @@
           *focus-group-hook*
           *key-press-hook*
           *root-click-hook*
-          *mode-line-click-hook*
           *display*
           *shell-program*
           *maxsize-border-width*
