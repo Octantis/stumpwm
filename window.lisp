@@ -570,8 +570,11 @@ and bottom_end_x."
                           :background (if (eq (window-type window) :normal)
                                           (get-color screen :win-bg)
                                           :none)
+
+                          ;; Will be defined in update-decoration once type is established
                           :border (get-color screen :unfocus)
                           :border-width (default-border-width-for-type window)
+
                           :event-mask *window-parent-events*)))
       (unless (eq (xlib:window-map-state (window-xwin window)) :unmapped)
         (incf (window-unmap-ignores window)))

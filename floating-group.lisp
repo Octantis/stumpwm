@@ -14,6 +14,13 @@
 (defvar *float-window-border* 1)
 (defvar *float-window-title-height* 10)
 
+(defvar *float-window-border-outer* 1)
+(defun (setf *float-window-border-outer*) (value)
+  (setf *float-window-border-outer* value)
+  (mapcar #'float-window-align
+          (mapcan #'get-floating-windows-in
+                  (sort-groups (current-screen)))))
+
 ;; some book keeping functions
 (defmethod (setf window-x) :before (val (window float-window))
   (unless (eql (window-x window) val)
@@ -53,16 +60,21 @@
                 (window-height win) height))))))
 
 (defmethod update-decoration ((window float-window))
-  (let ((group (window-group window)))
-    (setf (xlib:window-background (window-parent window))
-          (if (eq (group-current-window group) window)
-              (get-color (window-screen window) :float-focus)
-              (get-color (window-screen window) :float-unfocus)))
-    (xlib:clear-area (window-parent window))))
+  (let ((focused (eq (group-current-window (window-group window)) window))
+        (screen (window-screen window))
+        (parent (window-parent window)))
+    (setf (xlib:window-background parent) ;; Inner Border
+          (if focused
+              (get-color screen :float-inner-focus)
+              (get-color screen :float-inner-unfocus))
+          (xlib:window-border parent) ;; Outer border
+          (if focused
+              (get-color screen :float-outer-focus)
+              (get-color screen :float-outer-unfocus)))
+    (xlib:clear-area parent)))
 
 (defmethod window-sync ((window float-window) hint)
-  (declare (ignore hint))
-  )
+  (declare (ignore hint)))
 
 (defmethod window-head ((window float-window))
   (dolist (head (screen-heads (group-screen (window-group window))))
@@ -143,8 +155,15 @@
     (xlib:with-state (parent)
       (setf (xlib:drawable-width parent) (+ width (* 2 *float-window-border*))
             (xlib:drawable-height parent) (+ height *float-window-title-height* *float-window-border*)
-            (xlib:window-background parent) (xlib:alloc-color (xlib:screen-default-colormap (screen-number (window-screen window)))
-                                                              "Orange")))
+
+            ;; Outer border
+            (xlib:drawable-border-width parent) *float-window-border-outer*
+            ;; (xlib:window-border parent) (get-color (window-screen window) :unfocus)
+
+            ;; Changed by update-decoration
+            (xlib:window-background parent) (get-color (window-screen window) :unfocus)))
+            ;; (xlib:window-background parent) (xlib:alloc-color (xlib:screen-default-colormap (screen-number (window-screen window)))
+            ;;                                                   "Orange")))
     (xlib:clear-area (window-parent window))))
 
 (defmethod group-resize-request ((group float-group) window width height)
