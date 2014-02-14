@@ -64,13 +64,13 @@
         (screen (window-screen window))
         (parent (window-parent window)))
     (setf (xlib:window-background parent) ;; Inner Border
-          (if focused
-              (get-color screen :float-inner-focus)
-              (get-color screen :float-inner-unfocus))
+          (get-color screen (if focused
+                                :float-inner-focus
+                                :float-inner-unfocus))
           (xlib:window-border parent) ;; Outer border
-          (if focused
-              (get-color screen :float-outer-focus)
-              (get-color screen :float-outer-unfocus)))
+          (get-color screen (if focused
+                                :float-outer-focus
+                                :float-outer-unfocus)))
     (xlib:clear-area parent)))
 
 (defmethod window-sync ((window float-window) hint)
